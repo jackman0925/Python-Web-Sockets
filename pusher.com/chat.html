@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Neutron Chat: Pusher.com Example</title>
+    <style type="text/css">
+      html, body {
+        height: calc(100% - 10px);
+        margin: 0;
+        padding: 5px;
+      }
+      
+      h1 {
+        font-size: 2em;
+        margin: 0 0 10px 0;
+        background-image: url(https://www.neutrondrive.com/static/img/neutron_face_64.png);
+        background-repeat: no-repeat;
+        background-size: 32px 32px;
+        padding: 0 0 0 42px;
+        background-position: left center;
+      }
+      
+      #chatroom {
+        width: 100%;
+        height: calc(100% - (5em + 40px));
+        border: 1px solid #ccc;
+        margin: 0 0 10px 0;
+        overflow: auto;
+      }
+      
+      #message {
+        height: 3em;
+        width: calc(100% - 140px);
+        display: inline-block;
+        margin: 0 10px 0 0;
+        vertical-align: middle;
+      }
+      
+      button {
+        display: inline-block;
+        width: 90px;
+        height: 3em;
+        vertical-align: middle;
+        font-weight: bold;
+      }
+      
+      .color0 { color: #fe3f3f;}
+      .color1 { color: #3f3ffe;}
+      .color2 { color: #ff6600;}
+      .color3 { color: #00be00;}
+      .color4 { color: #be00be;}
+    </style>
+    <script src="http://js.pusher.com/2.1/pusher.min.js" type="text/javascript"></script>
+    <script src="http://code.jquery.com/jquery-2.0.3.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      var username = null;
+      var users = [];
+      
+      var pusher = new Pusher('c35f2f2464da331ba3d3');
+      var channel = pusher.subscribe('test_channel');
+      
+      channel.bind('message_event', function(data) {
+        var doScroll = $("#chatroom").scrollTop() + $("#chatroom").height() == $("#chatroom")[0].scrollHeight;
+        $("#chatroom").append(colorize(data.username, data.message));
+        
+        if (doScroll) {
+          setTimeout(scroll_bottom, 50);
+        }
+      });
+      
+      function scroll_bottom () {
+        $("#chatroom").scrollTop($("#chatroom")[0].scrollHeight);
+      }
+      
+      function colorize (username, message) {
+        if (username == 'moderator') {
+          return '<em>' + message + '</em>\n';
+        }
+        
+        if (users.indexOf(username) < 0) {
+          users.push(username);
+        }
+        
+        var color = users.indexOf(username) % 5;
+        
+        var html = '<span class="color' + color + '">' + username + ': ' + message + '</span>\n';
+        return html
+      }
+      
+      function send_message () {
+        var message = $("#message").val();
+        $.ajax({
+          type: "POST",
+          url: '/',
+          data: {username: username, message: message},
+          success: function () {
+            $("#message").val('');
+            $("#message").focus();
+          }
+        });
+      }
+      
+      while (1) {
+        username = prompt('Enter a username:');
+        if (username) {
+          username = username.replace(/\s/g, "&#128169;");
+          break;
+        }
+      }
+      
+      $.ajax({
+        type: "POST",
+        url: '/',
+        data: {username: 'moderator', message: username + ' entered the room'},
+        success: function () {
+          $("#message").val('');
+          $("#message").focus();
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Neutron Chat: Pusher.com Example</h1>
+    <pre id="chatroom"></pre>
+    <div id="sender">
+      <textarea id="message"></textarea>
+      <button onclick="send_message()">Send</button>
+    </div>
+  </body>
+</html>
