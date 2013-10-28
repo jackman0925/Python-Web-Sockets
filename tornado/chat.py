@@ -40,6 +40,8 @@ class ChatWebSocket (WebSocketHandler):
   def on_close (self):
     ChatWebSocket.sockets.remove(self)
     logging.info("%s closed" % self.username)
+    m = '%s left the room' % self.username
+    ChatWebSocket.send_updates({'username': 'moderator', 'message': m})
     
 class MainHandler (tornado.web.RequestHandler):
   def get (self):
